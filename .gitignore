@@ -17,6 +17,7 @@ Thumbs.db
 
 # Claude Code project state
 .claude/
+CLAUDE.md
 
 # .NET
 *.swp
