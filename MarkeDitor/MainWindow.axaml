@@ -1,0 +1,123 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ae="https://github.com/avaloniaui/avaloniaedit"
+        xmlns:md="https://github.com/whistyun/Markdown.Avalonia"
+        xmlns:helpers="clr-namespace:MarkeDitor.Helpers"
+        xmlns:views="using:MarkeDitor.Views"
+        mc:Ignorable="d"
+        x:Class="MarkeDitor.MainWindow"
+        Title="MarkeDitor"
+        Icon="avares://MarkeDitor/Assets/app.png"
+        Width="1200" Height="800"
+        Background="#22272e">
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+        <!-- Menu Bar -->
+        <Menu Grid.Row="0" Background="#2d333b" Foreground="#cdd9e5">
+            <MenuItem Header="_File">
+                <MenuItem Header="_New" InputGesture="Ctrl+N" Click="OnNewFile"/>
+                <MenuItem Header="_Open File..." InputGesture="Ctrl+O" Click="OnOpenFile"/>
+                <MenuItem Header="Open _Folder..." Click="OnOpenFolder"/>
+                <MenuItem x:Name="MnuRecent" Header="Open _Recent"/>
+                <Separator/>
+                <MenuItem Header="_Save" InputGesture="Ctrl+S" Click="OnSave"/>
+                <MenuItem Header="Save _As..." InputGesture="Ctrl+Shift+S" Click="OnSaveAs"/>
+                <Separator/>
+                <MenuItem Header="_Preferences..." Click="OnPreferences"/>
+                <Separator/>
+                <MenuItem Header="E_xit" Click="OnExit"/>
+            </MenuItem>
+            <MenuItem Header="_Edit">
+                <MenuItem Header="_Undo" InputGesture="Ctrl+Z" Click="OnUndo"/>
+                <MenuItem Header="_Redo" InputGesture="Ctrl+Y" Click="OnRedo"/>
+                <Separator/>
+                <MenuItem Header="_Find" InputGesture="Ctrl+F" Click="OnFind"/>
+            </MenuItem>
+            <MenuItem Header="_View">
+                <MenuItem Header="File Explorer" Click="OnToggleFileExplorer"/>
+                <MenuItem Header="Preview" Click="OnTogglePreview"/>
+                <Separator/>
+                <MenuItem Header="Zoom _In"   InputGesture="Ctrl++" Click="OnZoomIn"/>
+                <MenuItem Header="Zoom _Out"  InputGesture="Ctrl+-" Click="OnZoomOut"/>
+                <MenuItem Header="Reset _Zoom" InputGesture="Ctrl+0" Click="OnZoomReset"/>
+            </MenuItem>
+            <MenuItem Header="_Help">
+                <MenuItem Header="_About MarkeDitor..." Click="OnAbout"/>
+            </MenuItem>
+        </Menu>
+
+        <!-- Toolbar -->
+        <views:ToolbarView Grid.Row="1" x:Name="Toolbar"/>
+
+        <!-- Main Content -->
+        <Grid Grid.Row="2" x:Name="MainContentGrid">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="250"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <views:FileExplorerView Grid.Column="0" x:Name="FileExplorer"/>
+
+            <GridSplitter Grid.Column="1" Width="2" Background="#373e47"
+                          ResizeDirection="Columns"/>
+
+            <Grid Grid.Column="2" RowDefinitions="Auto,*">
+                <TabControl x:Name="TabBar" Grid.Row="0"
+                            Background="#2d333b"
+                            BorderThickness="0"
+                            Padding="0"
+                            SelectionChanged="OnTabSelectionChanged"/>
+
+                <Grid x:Name="EditorPreviewGrid" Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <ae:TextEditor Grid.Column="0" x:Name="Editor"
+                                   FontFamily="Cascadia Code,Consolas,Menlo,Monospace"
+                                   FontSize="14"
+                                   ShowLineNumbers="True"
+                                   WordWrap="True"
+                                   Background="#22272e"
+                                   Foreground="#cdd9e5"
+                                   Padding="6,8"/>
+
+                    <GridSplitter Grid.Column="1" Width="6" Background="#373e47"
+                                  ResizeDirection="Columns"/>
+
+                    <Border Grid.Column="2" Background="#22272e">
+                        <md:MarkdownScrollViewer x:Name="Preview" Markdown="">
+                            <md:MarkdownScrollViewer.Plugins>
+                                <md:MdAvPlugins>
+                                    <md:MdAvPlugins.Plugins>
+                                        <helpers:TextMateCodeBlockPlugin/>
+                                    </md:MdAvPlugins.Plugins>
+                                </md:MdAvPlugins>
+                            </md:MarkdownScrollViewer.Plugins>
+                        </md:MarkdownScrollViewer>
+                    </Border>
+                </Grid>
+            </Grid>
+        </Grid>
+
+        <!-- Status Bar -->
+        <Border Grid.Row="3" Background="#2d333b" BorderBrush="#373e47" BorderThickness="0,1,0,0" Padding="8,4">
+            <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                <TextBlock x:Name="StatusPosition" Grid.Column="0"
+                           Text="Ln 1, Col 1" Margin="0,0,16,0"
+                           Foreground="#768390"/>
+                <TextBlock x:Name="StatusWordCount" Grid.Column="1"
+                           Text="0 words" Margin="0,0,16,0"
+                           Foreground="#768390"/>
+                <TextBlock x:Name="StatusEncoding" Grid.Column="3"
+                           Text="UTF-8"
+                           Foreground="#768390"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

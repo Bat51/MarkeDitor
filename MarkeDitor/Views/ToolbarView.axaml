@@ -1,0 +1,46 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="MarkeDitor.Views.ToolbarView">
+    <UserControl.Styles>
+        <Style Selector="Button.tb">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#cdd9e5"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="MinWidth" Value="32"/>
+            <Setter Property="Margin" Value="2,0"/>
+        </Style>
+        <Style Selector="Button.tb:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#373e47"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Border Background="#2d333b">
+        <StackPanel Orientation="Horizontal" Spacing="0" Margin="6,4">
+            <Button Classes="tb" ToolTip.Tip="Bold (Ctrl+B)" Click="OnBold">
+                <TextBlock Text="B" FontWeight="Bold" FontSize="16"/>
+            </Button>
+            <Button Classes="tb" ToolTip.Tip="Italic (Ctrl+I)" Click="OnItalic">
+                <TextBlock Text="I" FontStyle="Italic" FontSize="16"/>
+            </Button>
+            <Border Width="1" Background="#444c56" Margin="6,4"/>
+            <Button Classes="tb" ToolTip.Tip="Heading 1" Click="OnH1">
+                <TextBlock Text="H1" FontWeight="Bold"/>
+            </Button>
+            <Button Classes="tb" ToolTip.Tip="Heading 2" Click="OnH2">
+                <TextBlock Text="H2" FontWeight="Bold"/>
+            </Button>
+            <Button Classes="tb" ToolTip.Tip="Heading 3" Click="OnH3">
+                <TextBlock Text="H3" FontWeight="Bold"/>
+            </Button>
+            <Border Width="1" Background="#444c56" Margin="6,4"/>
+            <Button Classes="tb" ToolTip.Tip="Insert Link (Ctrl+K)" Click="OnLink" Content="Link"/>
+            <Button Classes="tb" ToolTip.Tip="Insert Image" Click="OnImage" Content="Img"/>
+            <Border Width="1" Background="#444c56" Margin="6,4"/>
+            <Button Classes="tb" ToolTip.Tip="Code Block" Click="OnCode" Content="Code"/>
+            <Button Classes="tb" ToolTip.Tip="Bullet List" Click="OnBulletList" Content="• List"/>
+            <Button Classes="tb" ToolTip.Tip="Numbered List" Click="OnNumberList" Content="1. List"/>
+            <Button Classes="tb" ToolTip.Tip="Blockquote" Click="OnQuote" Content="❝"/>
+        </StackPanel>
+    </Border>
+</UserControl>

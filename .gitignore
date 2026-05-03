@@ -1,0 +1,23 @@
+# Build output
+**/bin/
+**/obj/
+Publish/
+
+# Crash & runtime artifacts
+crash.log
+*.user
+
+# IDE / tooling
+.vs/
+.vscode/
+.idea/
+*.suo
+.DS_Store
+Thumbs.db
+
+# Claude Code project state
+.claude/
+
+# .NET
+*.swp
+*.lock.json
