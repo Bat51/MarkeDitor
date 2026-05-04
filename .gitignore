@@ -19,6 +19,9 @@ Thumbs.db
 .claude/
 CLAUDE.md
 
+# Local-only design notes
+PLAN.md
+
 # .NET
 *.swp
 *.lock.json

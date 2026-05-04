@@ -33,7 +33,6 @@ install-linux.sh            # per-user install: copies the build, registers the
                             # .desktop launcher and icon (no sudo needed)
 uninstall-linux.sh
 installer.iss               # Inno Setup script for the Windows installer
-PLAN.md                     # original design notes
 ```
 
 ## Develop
