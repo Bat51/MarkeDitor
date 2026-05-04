@@ -3,11 +3,20 @@
 Cross-platform Markdown editor with live preview, written in C# / Avalonia 11.
 Single codebase, runs natively on **Linux**, **Windows** and **macOS**.
 
+[![Latest release](https://img.shields.io/github/v/release/Bat51/MarkeDitor?label=release)](https://github.com/Bat51/MarkeDitor/releases/latest)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![.NET 8](https://img.shields.io/badge/.NET-8-blue)
 ![Avalonia 11](https://img.shields.io/badge/Avalonia-11-purple)
 
 ![MarkeDitor — editor and live preview side by side](docs/screenshots/main.png)
+
+## Download
+
+Pre-built binaries are attached to every release on the
+[Releases page](https://github.com/Bat51/MarkeDitor/releases/latest):
+
+- **Windows** — `MarkeDitor-Setup-x.y.z.exe` (installer, recommended) or `…-win-x64.zip` (portable)
+- **Linux** — `…-linux-x64.tar.gz` (extract and run, or use `install-linux.sh` from the repo for a per-user install)
 
 ## Features
 
