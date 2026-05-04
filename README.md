@@ -7,6 +7,8 @@ Single codebase, runs natively on **Linux**, **Windows** and **macOS**.
 ![.NET 8](https://img.shields.io/badge/.NET-8-blue)
 ![Avalonia 11](https://img.shields.io/badge/Avalonia-11-purple)
 
+![MarkeDitor — editor and live preview side by side](docs/screenshots/main.png)
+
 ## Features
 
 - **AvaloniaEdit** code editor with TextMate-powered Markdown syntax highlighting
