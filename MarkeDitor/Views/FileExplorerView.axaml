@@ -4,14 +4,14 @@
              xmlns:vm="using:MarkeDitor.ViewModels"
              x:Class="MarkeDitor.Views.FileExplorerView"
              x:DataType="vm:FileExplorerViewModel">
-    <Grid Background="#22272e" RowDefinitions="Auto,*">
+    <Grid Background="{DynamicResource AppBackgroundBrush}" RowDefinitions="Auto,*">
         <TextBlock Name="FolderHeader" Grid.Row="0"
                    Text="Explorer" FontWeight="SemiBold"
-                   Padding="12,8" Foreground="#cdd9e5"/>
+                   Padding="12,8" Foreground="{DynamicResource AppForegroundBrush}"/>
 
         <TreeView Name="FileTree" Grid.Row="1"
                   Background="Transparent"
-                  Foreground="#cdd9e5"
+                  Foreground="{DynamicResource AppForegroundBrush}"
                   ItemsSource="{Binding Items}"
                   DoubleTapped="OnFileTreeDoubleTapped">
             <TreeView.ItemTemplate>

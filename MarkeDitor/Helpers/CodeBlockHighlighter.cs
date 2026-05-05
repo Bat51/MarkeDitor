@@ -24,6 +24,16 @@ public class TextMateCodeBlockPlugin : IMdAvPlugin
         @"^[ ]{0,3}```[ \t]*(?<lang>[A-Za-z0-9_+\-#]*)[ \t]*\r?\n(?<code>[\s\S]*?)\r?\n[ ]{0,3}```[ \t]*(?:\r?\n|$)",
         RegexOptions.Multiline | RegexOptions.Compiled);
 
+    public static ThemeName CurrentTheme { get; private set; } = ThemeName.DarkPlus;
+    public static event Action? ThemeChanged;
+
+    public static void SetTheme(ThemeName theme)
+    {
+        if (CurrentTheme == theme) return;
+        CurrentTheme = theme;
+        ThemeChanged?.Invoke();
+    }
+
     public void Setup(SetupInfo info)
     {
         var parser = BlockParser.New(
@@ -45,21 +55,30 @@ public class TextMateCodeBlockPlugin : IMdAvPlugin
             ShowLineNumbers = false,
             FontFamily = new FontFamily("Cascadia Code,Consolas,Menlo,Monospace"),
             FontSize = 13,
-            Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x22, 0x29)),
-            Foreground = new SolidColorBrush(Color.FromRgb(0xcd, 0xd9, 0xe5)),
             HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto,
             VerticalScrollBarVisibility   = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,
             Padding = new Thickness(8),
         };
+        editor.Bind(TextEditor.BackgroundProperty, editor.GetResourceObservable("AppCodeBackgroundBrush"));
+        editor.Bind(TextEditor.ForegroundProperty, editor.GetResourceObservable("AppForegroundBrush"));
 
         // Hook TextMate AFTER the editor is loaded into the visual tree,
         // otherwise InstallTextMate fails because the TextArea is null.
+        AvaloniaEdit.TextMate.TextMate.Installation? tm = null;
+        RegistryOptions? registry = null;
+
+        Action onThemeChanged = () =>
+        {
+            if (tm == null || registry == null) return;
+            try { tm.SetTheme(registry.LoadTheme(CurrentTheme)); } catch { }
+        };
+
         editor.AttachedToVisualTree += (_, _) =>
         {
             try
             {
-                var registry = new RegistryOptions(ThemeName.DarkPlus);
-                var tm = editor.InstallTextMate(registry);
+                registry = new RegistryOptions(CurrentTheme);
+                tm = editor.InstallTextMate(registry);
                 var langId = MapLanguage(lang);
                 if (!string.IsNullOrEmpty(langId))
                 {
@@ -67,8 +86,14 @@ public class TextMateCodeBlockPlugin : IMdAvPlugin
                     if (!string.IsNullOrEmpty(scope))
                         tm.SetGrammar(scope);
                 }
+                ThemeChanged += onThemeChanged;
             }
             catch { /* fall back to plain text */ }
+        };
+
+        editor.DetachedFromVisualTree += (_, _) =>
+        {
+            ThemeChanged -= onThemeChanged;
         };
 
         var border = new Border
@@ -76,10 +101,10 @@ public class TextMateCodeBlockPlugin : IMdAvPlugin
             Margin = new Thickness(0, 6),
             CornerRadius = new CornerRadius(6),
             BorderThickness = new Thickness(1),
-            BorderBrush = new SolidColorBrush(Color.FromRgb(0x37, 0x3e, 0x47)),
-            Background = new SolidColorBrush(Color.FromRgb(0x1e, 0x22, 0x29)),
             Child = editor,
         };
+        border.Bind(Border.BackgroundProperty, border.GetResourceObservable("AppCodeBackgroundBrush"));
+        border.Bind(Border.BorderBrushProperty, border.GetResourceObservable("AppCodeBorderBrush"));
         yield return border;
     }
 

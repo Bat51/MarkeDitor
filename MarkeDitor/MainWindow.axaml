@@ -11,11 +11,11 @@
         Title="MarkeDitor"
         Icon="avares://MarkeDitor/Assets/app.png"
         Width="1200" Height="800"
-        Background="#22272e">
+        Background="{DynamicResource AppBackgroundBrush}">
 
     <Grid RowDefinitions="Auto,Auto,*,Auto">
         <!-- Menu Bar -->
-        <Menu Grid.Row="0" Background="#2d333b" Foreground="#cdd9e5">
+        <Menu Grid.Row="0" Background="{DynamicResource AppPanelBrush}" Foreground="{DynamicResource AppForegroundBrush}">
             <MenuItem Header="_File">
                 <MenuItem Header="_New" InputGesture="Ctrl+N" Click="OnNewFile"/>
                 <MenuItem Header="_Open File..." InputGesture="Ctrl+O" Click="OnOpenFile"/>
@@ -61,12 +61,12 @@
 
             <views:FileExplorerView Grid.Column="0" x:Name="FileExplorer"/>
 
-            <GridSplitter Grid.Column="1" Width="2" Background="#373e47"
+            <GridSplitter Grid.Column="1" Width="2" Background="{DynamicResource AppDividerBrush}"
                           ResizeDirection="Columns"/>
 
             <Grid Grid.Column="2" RowDefinitions="Auto,*">
                 <TabControl x:Name="TabBar" Grid.Row="0"
-                            Background="#2d333b"
+                            Background="{DynamicResource AppPanelBrush}"
                             BorderThickness="0"
                             Padding="0"
                             SelectionChanged="OnTabSelectionChanged"/>
@@ -83,14 +83,14 @@
                                    FontSize="14"
                                    ShowLineNumbers="True"
                                    WordWrap="True"
-                                   Background="#22272e"
-                                   Foreground="#cdd9e5"
+                                   Background="{DynamicResource AppEditorBackgroundBrush}"
+                                   Foreground="{DynamicResource AppForegroundBrush}"
                                    Padding="6,8"/>
 
-                    <GridSplitter Grid.Column="1" Width="6" Background="#373e47"
+                    <GridSplitter Grid.Column="1" Width="6" Background="{DynamicResource AppDividerBrush}"
                                   ResizeDirection="Columns"/>
 
-                    <Border Grid.Column="2" Background="#22272e">
+                    <Border Grid.Column="2" Background="{DynamicResource AppEditorBackgroundBrush}">
                         <md:MarkdownScrollViewer x:Name="Preview" Markdown="">
                             <md:MarkdownScrollViewer.Plugins>
                                 <md:MdAvPlugins>
@@ -106,17 +106,17 @@
         </Grid>
 
         <!-- Status Bar -->
-        <Border Grid.Row="3" Background="#2d333b" BorderBrush="#373e47" BorderThickness="0,1,0,0" Padding="8,4">
+        <Border Grid.Row="3" Background="{DynamicResource AppPanelBrush}" BorderBrush="{DynamicResource AppDividerBrush}" BorderThickness="0,1,0,0" Padding="8,4">
             <Grid ColumnDefinitions="Auto,Auto,*,Auto">
                 <TextBlock x:Name="StatusPosition" Grid.Column="0"
                            Text="Ln 1, Col 1" Margin="0,0,16,0"
-                           Foreground="#768390"/>
+                           Foreground="{DynamicResource AppMutedTextBrush}"/>
                 <TextBlock x:Name="StatusWordCount" Grid.Column="1"
                            Text="0 words" Margin="0,0,16,0"
-                           Foreground="#768390"/>
+                           Foreground="{DynamicResource AppMutedTextBrush}"/>
                 <TextBlock x:Name="StatusEncoding" Grid.Column="3"
                            Text="UTF-8"
-                           Foreground="#768390"/>
+                           Foreground="{DynamicResource AppMutedTextBrush}"/>
             </Grid>
         </Border>
     </Grid>

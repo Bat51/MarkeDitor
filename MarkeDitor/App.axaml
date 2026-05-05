@@ -2,6 +2,38 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="MarkeDitor.App"
              RequestedThemeVariant="Dark">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="AppBackgroundBrush"       Color="#22272e"/>
+                    <SolidColorBrush x:Key="AppEditorBackgroundBrush" Color="#22272e"/>
+                    <SolidColorBrush x:Key="AppPanelBrush"            Color="#2d333b"/>
+                    <SolidColorBrush x:Key="AppDividerBrush"          Color="#373e47"/>
+                    <SolidColorBrush x:Key="AppBorderBrush"           Color="#444c56"/>
+                    <SolidColorBrush x:Key="AppForegroundBrush"       Color="#cdd9e5"/>
+                    <SolidColorBrush x:Key="AppMutedTextBrush"        Color="#768390"/>
+                    <SolidColorBrush x:Key="AppHoverBrush"            Color="#373e47"/>
+                    <SolidColorBrush x:Key="AppCodeBackgroundBrush"   Color="#1e2229"/>
+                    <SolidColorBrush x:Key="AppCodeBorderBrush"       Color="#373e47"/>
+                    <SolidColorBrush x:Key="AppLinkBrush"             Color="#58a6ff"/>
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="AppBackgroundBrush"       Color="#ffffff"/>
+                    <SolidColorBrush x:Key="AppEditorBackgroundBrush" Color="#ffffff"/>
+                    <SolidColorBrush x:Key="AppPanelBrush"            Color="#f6f8fa"/>
+                    <SolidColorBrush x:Key="AppDividerBrush"          Color="#d0d7de"/>
+                    <SolidColorBrush x:Key="AppBorderBrush"           Color="#d8dee4"/>
+                    <SolidColorBrush x:Key="AppForegroundBrush"       Color="#1f2328"/>
+                    <SolidColorBrush x:Key="AppMutedTextBrush"        Color="#656d76"/>
+                    <SolidColorBrush x:Key="AppHoverBrush"            Color="#eaeef2"/>
+                    <SolidColorBrush x:Key="AppCodeBackgroundBrush"   Color="#f6f8fa"/>
+                    <SolidColorBrush x:Key="AppCodeBorderBrush"       Color="#d0d7de"/>
+                    <SolidColorBrush x:Key="AppLinkBrush"             Color="#0969da"/>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
     <Application.Styles>
         <FluentTheme />
         <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml"/>

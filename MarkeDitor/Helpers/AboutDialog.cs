@@ -35,12 +35,11 @@ public static class AboutDialog
             CanResize = false,
             ShowInTaskbar = false,
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            Background = new SolidColorBrush(Color.FromRgb(0x2d, 0x33, 0x3b))
         };
+        dialog.BindToResource(Window.BackgroundProperty, "AppPanelBrush");
 
-        var fg = new SolidColorBrush(Color.FromRgb(0xcd, 0xd9, 0xe5));
-        var muted = new SolidColorBrush(Color.FromRgb(0x76, 0x83, 0x90));
-        var link = new SolidColorBrush(Color.FromRgb(0x58, 0xa6, 0xff));
+        const string fgKey = "AppForegroundBrush";
+        const string mutedKey = "AppMutedTextBrush";
 
         var icon = new Image
         {
@@ -62,15 +61,16 @@ public static class AboutDialog
             FontSize = 22,
             FontWeight = FontWeight.SemiBold,
             HorizontalAlignment = HorizontalAlignment.Center,
-            Foreground = fg
         };
+        name.BindToResource(TextBlock.ForegroundProperty, fgKey);
+
         var ver = new TextBlock
         {
             Text = $"Version {version}",
             HorizontalAlignment = HorizontalAlignment.Center,
-            Foreground = muted,
             Margin = new Thickness(0, 4, 0, 4)
         };
+        ver.BindToResource(TextBlock.ForegroundProperty, mutedKey);
 
         var updateStatus = new StackPanel
         {
@@ -78,29 +78,26 @@ public static class AboutDialog
             HorizontalAlignment = HorizontalAlignment.Center,
             Margin = new Thickness(0, 0, 0, 8)
         };
-        updateStatus.Children.Add(new TextBlock
-        {
-            Text = "Checking for updates…",
-            FontSize = 11,
-            Foreground = muted
-        });
+        var checkingTb = new TextBlock { Text = "Checking for updates…", FontSize = 11 };
+        checkingTb.BindToResource(TextBlock.ForegroundProperty, mutedKey);
+        updateStatus.Children.Add(checkingTb);
 
         var desc = new TextBlock
         {
             Text = "Cross-platform Markdown editor with live preview.",
             TextWrapping = TextWrapping.Wrap,
             TextAlignment = TextAlignment.Center,
-            Foreground = fg,
             Margin = new Thickness(20, 0, 20, 12)
         };
+        desc.BindToResource(TextBlock.ForegroundProperty, fgKey);
 
         var copyright = new TextBlock
         {
             Text = "© 2026 Laurent Massy",
             HorizontalAlignment = HorizontalAlignment.Center,
-            Foreground = muted,
             Margin = new Thickness(0, 0, 0, 16)
         };
+        copyright.BindToResource(TextBlock.ForegroundProperty, mutedKey);
 
         var links = new Grid
         {
@@ -109,10 +106,10 @@ public static class AboutDialog
             RowDefinitions = new RowDefinitions("Auto,Auto,Auto,Auto"),
             Margin = new Thickness(0, 0, 0, 14)
         };
-        AddLinkRow(links, 0, "Repository:", "github.com/Bat51/MarkeDitor", RepoUrl, fg, link);
-        AddLinkRow(links, 1, "Releases:", "Download latest", ReleasesUrl, fg, link);
-        AddLinkRow(links, 2, "Issues:", "Report a bug", IssuesUrl, fg, link);
-        AddLinkRow(links, 3, "Contact:", ContactEmail, "mailto:" + ContactEmail, fg, link);
+        AddLinkRow(links, 0, "Repository:", "github.com/Bat51/MarkeDitor", RepoUrl);
+        AddLinkRow(links, 1, "Releases:", "Download latest", ReleasesUrl);
+        AddLinkRow(links, 2, "Issues:", "Report a bug", IssuesUrl);
+        AddLinkRow(links, 3, "Contact:", ContactEmail, "mailto:" + ContactEmail);
 
         var licenseRow = new StackPanel
         {
@@ -120,13 +117,13 @@ public static class AboutDialog
             HorizontalAlignment = HorizontalAlignment.Center,
             Margin = new Thickness(0, 0, 0, 14)
         };
-        licenseRow.Children.Add(new TextBlock
-        {
-            Text = "Released under the ",
-            Foreground = muted
-        });
-        licenseRow.Children.Add(MakeLink("MIT License", LicenseUrl, link));
-        licenseRow.Children.Add(new TextBlock { Text = ".", Foreground = muted });
+        var licensePrefix = new TextBlock { Text = "Released under the " };
+        licensePrefix.BindToResource(TextBlock.ForegroundProperty, mutedKey);
+        licenseRow.Children.Add(licensePrefix);
+        licenseRow.Children.Add(MakeLink("MIT License", LicenseUrl));
+        var licenseDot = new TextBlock { Text = "." };
+        licenseDot.BindToResource(TextBlock.ForegroundProperty, mutedKey);
+        licenseRow.Children.Add(licenseDot);
 
         var credits = new TextBlock
         {
@@ -135,9 +132,9 @@ public static class AboutDialog
             TextWrapping = TextWrapping.Wrap,
             TextAlignment = TextAlignment.Center,
             FontSize = 11,
-            Foreground = muted,
             Margin = new Thickness(20, 0, 20, 16)
         };
+        credits.BindToResource(TextBlock.ForegroundProperty, mutedKey);
 
         var ok = new Button
         {
@@ -167,35 +164,26 @@ public static class AboutDialog
 
             if (tag is null || latest is null || current is null)
             {
-                updateStatus.Children.Add(new TextBlock
-                {
-                    Text = "Could not check for updates.",
-                    FontSize = 11,
-                    Foreground = muted
-                });
+                var notCheckedTb = new TextBlock { Text = "Could not check for updates.", FontSize = 11 };
+                notCheckedTb.BindToResource(TextBlock.ForegroundProperty, mutedKey);
+                updateStatus.Children.Add(notCheckedTb);
                 return;
             }
 
             if (Compare(latest, current) > 0)
             {
-                updateStatus.Children.Add(new TextBlock
-                {
-                    Text = $"Update available: {tag} — ",
-                    FontSize = 11,
-                    Foreground = fg
-                });
-                var dl = MakeLink("Download", ReleasesUrl, link);
+                var availTb = new TextBlock { Text = $"Update available: {tag} — ", FontSize = 11 };
+                availTb.BindToResource(TextBlock.ForegroundProperty, fgKey);
+                updateStatus.Children.Add(availTb);
+                var dl = MakeLink("Download", ReleasesUrl);
                 dl.FontSize = 11;
                 updateStatus.Children.Add(dl);
             }
             else
             {
-                updateStatus.Children.Add(new TextBlock
-                {
-                    Text = "You're up to date.",
-                    FontSize = 11,
-                    Foreground = muted
-                });
+                var uptodateTb = new TextBlock { Text = "You're up to date.", FontSize = 11 };
+                uptodateTb.BindToResource(TextBlock.ForegroundProperty, mutedKey);
+                updateStatus.Children.Add(uptodateTb);
             }
         };
 
@@ -235,35 +223,35 @@ public static class AboutDialog
         return ab.CompareTo(bb);
     }
 
-    private static void AddLinkRow(Grid grid, int row, string label, string text, string url, IBrush labelBrush, IBrush linkBrush)
+    private static void AddLinkRow(Grid grid, int row, string label, string text, string url)
     {
         var lbl = new TextBlock
         {
             Text = label,
-            Foreground = labelBrush,
             Margin = new Thickness(0, 1, 12, 1),
             MinWidth = 80
         };
+        lbl.BindToResource(TextBlock.ForegroundProperty, "AppForegroundBrush");
         Grid.SetRow(lbl, row);
         Grid.SetColumn(lbl, 0);
         grid.Children.Add(lbl);
 
-        var lnk = MakeLink(text, url, linkBrush);
+        var lnk = MakeLink(text, url);
         lnk.Margin = new Thickness(0, 1, 0, 1);
         Grid.SetRow(lnk, row);
         Grid.SetColumn(lnk, 1);
         grid.Children.Add(lnk);
     }
 
-    private static TextBlock MakeLink(string text, string url, IBrush brush)
+    private static TextBlock MakeLink(string text, string url)
     {
         var tb = new TextBlock
         {
             Text = text,
-            Foreground = brush,
             TextDecorations = TextDecorations.Underline,
             Cursor = new Cursor(StandardCursorType.Hand)
         };
+        tb.BindToResource(TextBlock.ForegroundProperty, "AppLinkBrush");
         tb.PointerPressed += (_, _) => OpenUrl(url);
         return tb;
     }

@@ -21,6 +21,8 @@ public class CursorPosition
 public class EditorBridge
 {
     private readonly TextEditor _editor;
+    private readonly RegistryOptions _registryOptions;
+    private readonly AvaloniaEdit.TextMate.TextMate.Installation _textMate;
     private bool _suppressContentChanged;
 
     public event EventHandler<string>? ContentChanged;
@@ -31,9 +33,9 @@ public class EditorBridge
         _editor = editor;
         SearchPanel.Install(editor);
 
-        var registryOptions = new RegistryOptions(ThemeName.DarkPlus);
-        var textMate = editor.InstallTextMate(registryOptions);
-        textMate.SetGrammar(registryOptions.GetScopeByLanguageId("markdown"));
+        _registryOptions = new RegistryOptions(ThemeName.DarkPlus);
+        _textMate = editor.InstallTextMate(_registryOptions);
+        _textMate.SetGrammar(_registryOptions.GetScopeByLanguageId("markdown"));
 
         editor.TextChanged += (_, _) =>
         {
@@ -120,5 +122,10 @@ public class EditorBridge
     {
         RevealLine(line);
         _editor.Focus();
+    }
+
+    public void ApplyTheme(ThemeName themeName)
+    {
+        try { _textMate.SetTheme(_registryOptions.LoadTheme(themeName)); } catch { }
     }
 }

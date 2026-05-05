@@ -28,9 +28,6 @@ public static class PreferencesDialog
 
     public static async Task<bool> ShowAsync(Window owner, AppSettings settings)
     {
-        var fg = new SolidColorBrush(Color.FromRgb(0xcd, 0xd9, 0xe5));
-        var bg = new SolidColorBrush(Color.FromRgb(0x2d, 0x33, 0x3b));
-
         var dialog = new Window
         {
             Title = "Preferences",
@@ -39,8 +36,8 @@ public static class PreferencesDialog
             CanResize = false,
             ShowInTaskbar = false,
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            Background = bg,
         };
+        dialog.BindToResource(Window.BackgroundProperty, "AppPanelBrush");
 
         var fontCombo = new ComboBox { ItemsSource = FontFamilies, SelectedItem = settings.FontFamily, Margin = new Thickness(0, 4, 0, 12), MinWidth = 260 };
         if (fontCombo.SelectedItem == null) fontCombo.SelectedItem = FontFamilies[0];
@@ -51,9 +48,12 @@ public static class PreferencesDialog
         var themeCombo = new ComboBox { ItemsSource = Themes, SelectedItem = settings.Theme, Margin = new Thickness(0, 4, 0, 12), MinWidth = 120 };
         if (themeCombo.SelectedItem == null) themeCombo.SelectedItem = "Dark";
 
-        var reopen = new CheckBox { Content = "Reopen last tabs on startup", IsChecked = settings.ReopenLastTabs, Foreground = fg, Margin = new Thickness(0, 8, 0, 4) };
-        var autocomplete = new CheckBox { Content = "Auto-complete words while typing", IsChecked = settings.AutoCompleteEnabled, Foreground = fg, Margin = new Thickness(0, 4, 0, 4) };
-        var spell = new CheckBox { Content = "Spell check (FR + EN)", IsChecked = settings.SpellCheckEnabled, Foreground = fg, Margin = new Thickness(0, 4, 0, 8) };
+        var reopen = new CheckBox { Content = "Reopen last tabs on startup", IsChecked = settings.ReopenLastTabs, Margin = new Thickness(0, 8, 0, 4) };
+        var autocomplete = new CheckBox { Content = "Auto-complete words while typing", IsChecked = settings.AutoCompleteEnabled, Margin = new Thickness(0, 4, 0, 4) };
+        var spell = new CheckBox { Content = "Spell check (FR + EN)", IsChecked = settings.SpellCheckEnabled, Margin = new Thickness(0, 4, 0, 8) };
+        reopen.BindToResource(CheckBox.ForegroundProperty, "AppForegroundBrush");
+        autocomplete.BindToResource(CheckBox.ForegroundProperty, "AppForegroundBrush");
+        spell.BindToResource(CheckBox.ForegroundProperty, "AppForegroundBrush");
 
         var grid = new Grid
         {
@@ -61,11 +61,11 @@ public static class PreferencesDialog
             ColumnDefinitions = new ColumnDefinitions("Auto,*"),
             RowDefinitions = new RowDefinitions("Auto,Auto,Auto,Auto,Auto,Auto"),
         };
-        Add(grid, new TextBlock { Text = "Font family", Foreground = fg, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 4, 12, 12) }, 0, 0);
+        Add(grid, Label("Font family"), 0, 0);
         Add(grid, fontCombo, 0, 1);
-        Add(grid, new TextBlock { Text = "Font size", Foreground = fg, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 4, 12, 12) }, 1, 0);
+        Add(grid, Label("Font size"), 1, 0);
         Add(grid, sizeCombo, 1, 1);
-        Add(grid, new TextBlock { Text = "Theme", Foreground = fg, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 4, 12, 12) }, 2, 0);
+        Add(grid, Label("Theme"), 2, 0);
         Add(grid, themeCombo, 2, 1);
         Grid.SetColumnSpan(reopen, 2);
         Grid.SetColumnSpan(autocomplete, 2);
@@ -114,5 +114,17 @@ public static class PreferencesDialog
         Grid.SetRow(child, row);
         Grid.SetColumn(child, col);
         grid.Children.Add(child);
+    }
+
+    private static TextBlock Label(string text)
+    {
+        var tb = new TextBlock
+        {
+            Text = text,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(0, 4, 12, 12),
+        };
+        tb.BindToResource(TextBlock.ForegroundProperty, "AppForegroundBrush");
+        return tb;
     }
 }

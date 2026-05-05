@@ -30,16 +30,16 @@ public static class DialogHelper
             CanResize = false,
             ShowInTaskbar = false,
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            Background = new SolidColorBrush(Color.FromRgb(0x2d, 0x33, 0x3b))
         };
+        dialog.BindToResource(Window.BackgroundProperty, "AppPanelBrush");
 
         var contentBlock = new TextBlock
         {
             Text = content,
             TextWrapping = TextWrapping.Wrap,
-            Foreground = new SolidColorBrush(Color.FromRgb(0xcd, 0xd9, 0xe5)),
             Margin = new Thickness(20, 16)
         };
+        contentBlock.BindToResource(TextBlock.ForegroundProperty, "AppForegroundBrush");
 
         var buttons = new StackPanel
         {

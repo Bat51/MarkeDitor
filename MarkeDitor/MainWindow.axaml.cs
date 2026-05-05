@@ -13,6 +13,7 @@ using Avalonia.Threading;
 using MarkeDitor.Helpers;
 using MarkeDitor.Services;
 using MarkeDitor.ViewModels;
+using TextMateSharp.Grammars;
 
 namespace MarkeDitor;
 
@@ -344,8 +345,9 @@ public partial class MainWindow : Window
             Text = tab.IsDirty ? $"{tab.FileName} *" : tab.FileName,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(0, 0, 6, 0),
-            Foreground = new SolidColorBrush(Color.FromRgb(0xcd, 0xd9, 0xe5))
         };
+        headerText.BindToResource(TextBlock.ForegroundProperty, "AppForegroundBrush");
+
         var closeButton = new Button
         {
             Content = "×",
@@ -353,9 +355,9 @@ public partial class MainWindow : Window
             MinWidth = 18,
             Background = Brushes.Transparent,
             BorderThickness = new Thickness(0),
-            Foreground = new SolidColorBrush(Color.FromRgb(0x76, 0x83, 0x90)),
             VerticalAlignment = VerticalAlignment.Center
         };
+        closeButton.BindToResource(Button.ForegroundProperty, "AppMutedTextBrush");
         var headerPanel = new StackPanel
         {
             Orientation = Orientation.Horizontal,
@@ -482,6 +484,14 @@ public partial class MainWindow : Window
         };
         if (Application.Current != null)
             Application.Current.RequestedThemeVariant = variant;
+
+        // Sync TextMate code-coloring with the UI theme. For "System", read the
+        // resolved variant after assignment so we follow the OS preference.
+        var resolved = Application.Current?.ActualThemeVariant;
+        var isLight = resolved == Avalonia.Styling.ThemeVariant.Light;
+        var tmTheme = isLight ? ThemeName.LightPlus : ThemeName.DarkPlus;
+        _editor?.ApplyTheme(tmTheme);
+        TextMateCodeBlockPlugin.SetTheme(tmTheme);
 
         if (_completion != null)
         {
