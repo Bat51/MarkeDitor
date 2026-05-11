@@ -836,6 +836,21 @@ public partial class MainWindow : Window
     {
         var props = e.GetCurrentPoint(Editor).Properties;
         if (!props.IsRightButtonPressed) return;
+
+        var menu = new ContextMenu();
+
+        // Spell-check suggestions get the top slot when applicable.
+        TryAppendSpellSuggestions(menu, e);
+
+        AppendEditorContextItems(menu);
+
+        menu.PlacementTarget = Editor;
+        menu.Open(Editor);
+        e.Handled = true;
+    }
+
+    private void TryAppendSpellSuggestions(ContextMenu menu, PointerPressedEventArgs e)
+    {
         if (_spell == null || _spellRenderer == null) return;
         if (!_settingsService.Settings.SpellCheckEnabled) return;
 
@@ -850,7 +865,6 @@ public partial class MainWindow : Window
         var word = _spellRenderer.AtOffset(offset);
         if (word == null) return;
 
-        var menu = new ContextMenu();
         var suggestions = _spell.Suggest(word.Text).ToList();
         if (suggestions.Count == 0)
         {
@@ -871,7 +885,7 @@ public partial class MainWindow : Window
                 menu.Items.Add(item);
             }
         }
-        menu.Items.Add(new Separator());
+
         var add = new MenuItem { Header = $"Add \"{word.Text}\" to dictionary" };
         var capturedWord = word.Text;
         add.Click += (_, _) =>
@@ -881,10 +895,61 @@ public partial class MainWindow : Window
             _spellRenderer?.Rescan();
         };
         menu.Items.Add(add);
+        menu.Items.Add(new Separator());
+    }
 
-        menu.PlacementTarget = Editor;
-        menu.Open(Editor);
-        e.Handled = true;
+    private void AppendEditorContextItems(ContextMenu menu)
+    {
+        EditorBridge? bridge() => _editor;
+
+        menu.Items.Add(Item("Cu_t", "Ctrl+X", () => Editor.Cut()));
+        menu.Items.Add(Item("_Copy", "Ctrl+C", () => Editor.Copy()));
+        menu.Items.Add(Item("_Paste", "Ctrl+V", async () => await TryPasteAsync()));
+        menu.Items.Add(new Separator());
+        menu.Items.Add(Item("_Undo", "Ctrl+Z", () => bridge()?.Undo()));
+        menu.Items.Add(Item("_Redo", "Ctrl+Y", () => bridge()?.Redo()));
+        menu.Items.Add(new Separator());
+        menu.Items.Add(Item("_Bold", "Ctrl+B", () => bridge()?.WrapSelection("**", "**")));
+        menu.Items.Add(Item("_Italic", "Ctrl+I", () => bridge()?.WrapSelection("*", "*")));
+        menu.Items.Add(Item("Inline Cod_e", null, () => bridge()?.WrapSelection("`", "`")));
+
+        var insert = new MenuItem { Header = "_Insert" };
+        insert.Items.Add(Item("Heading _1", null, () => bridge()?.InsertAtLineStart("# ")));
+        insert.Items.Add(Item("Heading _2", null, () => bridge()?.InsertAtLineStart("## ")));
+        insert.Items.Add(Item("Heading _3", null, () => bridge()?.InsertAtLineStart("### ")));
+        insert.Items.Add(new Separator());
+        insert.Items.Add(Item("_Link", null, () => bridge()?.WrapSelection("[", "](url)")));
+        insert.Items.Add(Item("I_mage", null, () => bridge()?.WrapSelection("![", "](url)")));
+        insert.Items.Add(new Separator());
+        insert.Items.Add(Item("_Code block", null, () => bridge()?.WrapSelection("```\n", "\n```")));
+        insert.Items.Add(Item("_Quote", null, () => bridge()?.InsertAtLineStart("> ")));
+        insert.Items.Add(new Separator());
+        insert.Items.Add(Item("_Bullet list", null, () => bridge()?.InsertAtLineStart("- ")));
+        insert.Items.Add(Item("_Numbered list", null, () => bridge()?.InsertAtLineStart("1. ")));
+        insert.Items.Add(Item("_Horizontal rule", null, () => bridge()?.InsertText("\n---\n")));
+        menu.Items.Add(insert);
+
+        menu.Items.Add(new Separator());
+        menu.Items.Add(Item("Select _All", "Ctrl+A", () => Editor.SelectAll()));
+        menu.Items.Add(Item("_Find", "Ctrl+F", () => bridge()?.OpenFind()));
+    }
+
+    private static MenuItem Item(string header, string? gesture, Action onClick)
+    {
+        var mi = new MenuItem { Header = header };
+        if (!string.IsNullOrEmpty(gesture))
+            mi.InputGesture = KeyGesture.Parse(gesture);
+        mi.Click += (_, _) => onClick();
+        return mi;
+    }
+
+    private static MenuItem Item(string header, string? gesture, Func<Task> onClick)
+    {
+        var mi = new MenuItem { Header = header };
+        if (!string.IsNullOrEmpty(gesture))
+            mi.InputGesture = KeyGesture.Parse(gesture);
+        mi.Click += async (_, _) => await onClick();
+        return mi;
     }
 
     #endregion
