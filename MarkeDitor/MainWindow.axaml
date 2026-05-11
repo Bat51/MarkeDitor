@@ -41,6 +41,8 @@
                 <Separator/>
                 <MenuItem Header="Copy as HTM_L" Click="OnCopyAsHtml"/>
                 <MenuItem Header="Copy _Selection as HTML" Click="OnCopySelectionAsHtml"/>
+                <Separator/>
+                <MenuItem Header="Insert _Emoji..." InputGesture="Ctrl+E" Click="OnInsertEmoji"/>
             </MenuItem>
             <MenuItem Header="_View">
                 <MenuItem Header="File Explorer" Click="OnToggleFileExplorer"/>

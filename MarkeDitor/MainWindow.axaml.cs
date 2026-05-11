@@ -139,6 +139,10 @@ public partial class MainWindow : Window
                 e.Handled = true;
                 await TryPasteAsync();
                 break;
+            case Key.E when !shift:
+                e.Handled = true;
+                OnInsertEmoji(this, new Avalonia.Interactivity.RoutedEventArgs());
+                break;
         }
     }
 
@@ -691,6 +695,13 @@ public partial class MainWindow : Window
         await PutHtmlOnClipboardAsync(md.ToHtml(selected));
     }
 
+    private async void OnInsertEmoji(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        var shortcode = await EmojiPickerDialog.ShowAsync(this);
+        if (!string.IsNullOrEmpty(shortcode))
+            _editor?.InsertText(shortcode + " ");
+    }
+
     private async Task PutHtmlOnClipboardAsync(string html)
     {
         var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
@@ -927,6 +938,13 @@ public partial class MainWindow : Window
         insert.Items.Add(Item("_Bullet list", null, () => bridge()?.InsertAtLineStart("- ")));
         insert.Items.Add(Item("_Numbered list", null, () => bridge()?.InsertAtLineStart("1. ")));
         insert.Items.Add(Item("_Horizontal rule", null, () => bridge()?.InsertText("\n---\n")));
+        insert.Items.Add(new Separator());
+        insert.Items.Add(Item("_Emoji...", "Ctrl+E", async () =>
+        {
+            var shortcode = await EmojiPickerDialog.ShowAsync(this);
+            if (!string.IsNullOrEmpty(shortcode))
+                _editor?.InsertText(shortcode + " ");
+        }));
         menu.Items.Add(insert);
 
         menu.Items.Add(new Separator());
