@@ -131,7 +131,153 @@ public partial class MainWindow : Window
                 e.Handled = true;
                 SwitchTab(+1);
                 break;
+            case Key.V when !shift && Editor.TextArea.IsKeyboardFocusWithin:
+                e.Handled = true;
+                await TryPasteAsync();
+                break;
         }
+    }
+
+    private async Task TryPasteAsync()
+    {
+        var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+        if (clipboard == null) return;
+
+        IEnumerable<string>? formats = null;
+        try { formats = await clipboard.GetFormatsAsync(); }
+        catch { /* clipboard busy or unsupported */ }
+
+        if (formats != null)
+        {
+            var imgFormat = formats.FirstOrDefault(f =>
+                f != null && f.StartsWith("image/", StringComparison.OrdinalIgnoreCase));
+            if (imgFormat != null)
+            {
+                object? data = null;
+                try { data = await clipboard.GetDataAsync(imgFormat); }
+                catch { /* fall through to text path */ }
+                var bytes = data switch
+                {
+                    byte[] b => b,
+                    System.IO.MemoryStream ms => ms.ToArray(),
+                    _ => null
+                };
+                if (bytes is { Length: > 0 })
+                {
+                    await PasteImageAsync(bytes, imgFormat);
+                    return;
+                }
+            }
+        }
+
+        var text = await clipboard.GetTextAsync();
+        if (string.IsNullOrEmpty(text)) return;
+        InsertOrReplaceAtCaret(text);
+    }
+
+    private async Task PasteImageAsync(byte[] bytes, string mimeType)
+    {
+        var folder = ResolveImageFolder();
+        if (string.IsNullOrEmpty(folder))
+        {
+            await DialogHelper.ShowYesNoAsync(this, "Cannot paste image",
+                "No target folder available. Save the current document first, or open a folder in the explorer.",
+                "OK", "");
+            return;
+        }
+
+        try { Directory.CreateDirectory(folder); }
+        catch (Exception ex)
+        {
+            await DialogHelper.ShowYesNoAsync(this, "Cannot paste image",
+                $"Could not create folder {folder}:\n{ex.Message}", "OK", "");
+            return;
+        }
+
+        var ext = mimeType.ToLowerInvariant() switch
+        {
+            "image/png" => "png",
+            "image/jpeg" or "image/jpg" => "jpg",
+            "image/gif" => "gif",
+            "image/bmp" or "image/x-bmp" => "bmp",
+            "image/webp" => "webp",
+            _ => "png",
+        };
+
+        var baseName = GetDocumentBaseName();
+        var idx = NextImageIndex(folder, baseName);
+        var fileName = $"{baseName}-image{idx}.{ext}";
+        var fullPath = Path.Combine(folder, fileName);
+
+        try
+        {
+            await File.WriteAllBytesAsync(fullPath, bytes);
+        }
+        catch (Exception ex)
+        {
+            await DialogHelper.ShowYesNoAsync(this, "Cannot save image",
+                $"Could not write {fullPath}:\n{ex.Message}", "OK", "");
+            return;
+        }
+
+        // Use a path relative to the document directory when possible; falls
+        // back to the absolute path if the document hasn't been saved yet.
+        var docDir = Path.GetDirectoryName(_viewModel.ActiveTab?.FilePath ?? "");
+        var mdRef = !string.IsNullOrEmpty(docDir)
+            ? Path.GetRelativePath(docDir, fullPath).Replace('\\', '/')
+            : fullPath.Replace('\\', '/');
+
+        InsertOrReplaceAtCaret($"![]({mdRef})");
+    }
+
+    private void InsertOrReplaceAtCaret(string text)
+    {
+        var doc = Editor.Document;
+        if (Editor.SelectionLength > 0)
+            doc.Replace(Editor.SelectionStart, Editor.SelectionLength, text);
+        else
+            doc.Insert(Editor.CaretOffset, text);
+    }
+
+    private string? ResolveImageFolder()
+    {
+        var tab = _viewModel.ActiveTab;
+        if (!string.IsNullOrEmpty(tab?.FilePath))
+        {
+            var dir = Path.GetDirectoryName(tab.FilePath);
+            if (!string.IsNullOrEmpty(dir)) return dir;
+        }
+        var explorerRoot = FileExplorer.CurrentFolder;
+        if (!string.IsNullOrEmpty(explorerRoot)) return explorerRoot;
+        return null;
+    }
+
+    private string GetDocumentBaseName()
+    {
+        var tab = _viewModel.ActiveTab;
+        var src = !string.IsNullOrEmpty(tab?.FilePath) ? tab.FilePath : tab?.FileName;
+        var name = !string.IsNullOrEmpty(src)
+            ? Path.GetFileNameWithoutExtension(src)
+            : "Untitled";
+        return string.IsNullOrWhiteSpace(name) ? "Untitled" : name;
+    }
+
+    private static int NextImageIndex(string folder, string baseName)
+    {
+        if (!Directory.Exists(folder)) return 0;
+        var prefix = baseName + "-image";
+        var max = -1;
+        foreach (var path in Directory.EnumerateFiles(folder, prefix + "*"))
+        {
+            var name = Path.GetFileName(path);
+            // strip prefix and the trailing ".ext"
+            var stem = name.Substring(prefix.Length);
+            var dot = stem.LastIndexOf('.');
+            if (dot <= 0) continue;
+            var middle = stem.Substring(0, dot);
+            if (int.TryParse(middle, out var n) && n > max) max = n;
+        }
+        return max + 1;
     }
 
     private void SwitchTab(int delta)
@@ -245,6 +391,7 @@ public partial class MainWindow : Window
             await _fileService.WriteFileAsync(filePath, tab.Content);
             tab.FilePath = filePath;
             tab.FileName = Path.GetFileName(filePath);
+            if (tab == _viewModel.ActiveTab) UpdatePreviewAssetRoot();
         }
         else
         {
@@ -329,6 +476,18 @@ public partial class MainWindow : Window
     private void UpdatePreview(string markdownContent)
     {
         Preview.Markdown = markdownContent ?? string.Empty;
+    }
+
+    // Tell Markdown.Avalonia where to resolve relative asset paths (images,
+    // SVG, etc.) — by default it falls back to the process CWD, which is the
+    // build output during dev and never matches the file's own directory.
+    private void UpdatePreviewAssetRoot()
+    {
+        var tab = _viewModel.ActiveTab;
+        var dir = !string.IsNullOrEmpty(tab?.FilePath)
+            ? Path.GetDirectoryName(tab.FilePath)
+            : null;
+        Preview.AssetPathRoot = string.IsNullOrEmpty(dir) ? AppContext.BaseDirectory : dir;
     }
 
     private void UpdateWordCount(string content)
@@ -432,6 +591,7 @@ public partial class MainWindow : Window
         {
             _viewModel.ActiveTab = tab;
             _editor.SetContent(tab.Content);
+            UpdatePreviewAssetRoot();
             UpdatePreview(tab.Content);
             UpdateWordCount(tab.Content);
         }
@@ -783,6 +943,7 @@ public partial class MainWindow : Window
             tab.FileName = Path.GetFileName(filePath);
             tab.IsDirty = false;
             UpdateTabDisplay(tab);
+            if (tab == _viewModel.ActiveTab) UpdatePreviewAssetRoot();
             await _recoveryService.DeleteRecoveryAsync(tab.RecoveryId);
             RegisterRecent(filePath);
         }

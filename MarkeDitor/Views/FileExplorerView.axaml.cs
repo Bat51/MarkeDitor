@@ -13,6 +13,8 @@ public partial class FileExplorerView : UserControl
 
     public event EventHandler<string>? FileActivated;
 
+    public string? CurrentFolder => _viewModel.RootPath;
+
     public FileExplorerView()
     {
         DataContext = _viewModel;
