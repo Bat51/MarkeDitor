@@ -123,7 +123,25 @@ public partial class MainWindow : Window
                 e.Handled = true;
                 _completion?.ShowManual();
                 break;
+            case Key.Tab when shift:
+                e.Handled = true;
+                SwitchTab(-1);
+                break;
+            case Key.Tab when !shift:
+                e.Handled = true;
+                SwitchTab(+1);
+                break;
         }
+    }
+
+    private void SwitchTab(int delta)
+    {
+        var count = TabBar.Items.Count;
+        if (count <= 1) return;
+        var idx = TabBar.SelectedIndex;
+        if (idx < 0) idx = 0;
+        var next = ((idx + delta) % count + count) % count;
+        TabBar.SelectedIndex = next;
     }
 
     private async void OnWindowOpened(object? sender, EventArgs e)
