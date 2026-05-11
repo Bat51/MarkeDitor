@@ -4,6 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:ae="https://github.com/avaloniaui/avaloniaedit"
         xmlns:md="https://github.com/whistyun/Markdown.Avalonia"
+        xmlns:ctxt="clr-namespace:ColorTextBlock.Avalonia;assembly=ColorTextBlock.Avalonia"
         xmlns:helpers="clr-namespace:MarkeDitor.Helpers"
         xmlns:views="using:MarkeDitor.Views"
         mc:Ignorable="d"
@@ -99,6 +100,21 @@
                                     </md:MdAvPlugins.Plugins>
                                 </md:MdAvPlugins>
                             </md:MarkdownScrollViewer.Plugins>
+                            <!-- Inline `code` chip styling. Local Styles on
+                                 MarkdownScrollViewer override the
+                                 MarkdownStyle that Markdown.Avalonia injects
+                                 by default for ctxt:CCode. -->
+                            <md:MarkdownScrollViewer.Styles>
+                                <Style Selector="ctxt|CCode">
+                                    <Setter Property="FontFamily" Value="Cascadia Code,Consolas,Menlo,DejaVu Sans Mono,Monospace"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource AppForegroundBrush}"/>
+                                    <Setter Property="Background" Value="{DynamicResource AppCodeBackgroundBrush}"/>
+                                    <Setter Property="BorderBrush" Value="{DynamicResource AppCodeBorderBrush}"/>
+                                    <Setter Property="BorderThickness" Value="1"/>
+                                    <Setter Property="CornerRadius" Value="3"/>
+                                    <Setter Property="Padding" Value="4,1"/>
+                                </Style>
+                            </md:MarkdownScrollViewer.Styles>
                         </md:MarkdownScrollViewer>
                     </Border>
                 </Grid>
