@@ -80,6 +80,11 @@ public class WordCompletionProvider
         foreach (var w in suggestions)
             data.Add(new WordCompletionData(w));
 
+        // Pre-select the first suggestion so Enter and Tab insert it
+        // straight away. SelectItem(prefix) picks the best-matching entry
+        // which is usually what the user is typing toward.
+        win.CompletionList.SelectItem(prefix);
+
         win.Closed += (_, _) => _window = null;
         _window = win;
         win.Show();
