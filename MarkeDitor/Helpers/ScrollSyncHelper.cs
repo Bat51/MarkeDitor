@@ -1,9 +1,8 @@
 using System;
-using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Threading;
+using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using AvaloniaEdit;
 using Markdown.Avalonia;
@@ -12,8 +11,24 @@ namespace MarkeDitor.Helpers;
 
 /// <summary>
 /// Bidirectional scroll sync between AvaloniaEdit and Markdown.Avalonia.
-/// Both controls expose an inner ScrollViewer in their template; we hook
-/// ScrollChanged on each, with mutual ignore-windows to avoid feedback.
+///
+/// Editor -> preview is straightforward: any change in the editor's scroll
+/// position propagates to the preview proportionally.
+///
+/// Preview -> editor is the tricky direction. Markdown.Avalonia rebuilds
+/// its content tree on every <c>Markdown</c> assignment and its inner
+/// ScrollViewer emits a long tail of ScrollChanged events as the layout
+/// settles (offset clamps to 0 mid-rebuild, then extent grows back over
+/// several frames, sometimes more if images/embedded SVGs load async).
+/// Honouring those would yank the editor — typically straight back to the
+/// top of the document — every time the user types.
+///
+/// We therefore treat preview -> editor sync as opt-in: it only fires when
+/// the user has just acted on the preview (mouse wheel or scrollbar/track
+/// click). Programmatic offset changes from rebuilds are silently
+/// swallowed. Editor -> preview alignment is also re-applied on each
+/// preview layout pass for a short window after typing, so the preview
+/// catches up to the editor's position once the rebuild settles.
 /// </summary>
 public class ScrollSyncHelper
 {
@@ -24,21 +39,52 @@ public class ScrollSyncHelper
 
     private DateTime _ignoreEditorUntil = DateTime.MinValue;
     private DateTime _ignorePreviewUntil = DateTime.MinValue;
+    private DateTime _previewUserScrollUntil = DateTime.MinValue;
+    private DateTime _resyncPreviewUntil = DateTime.MinValue;
 
     public ScrollSyncHelper(TextEditor editor, MarkdownScrollViewer preview)
     {
         _editor = editor;
         _preview = preview;
 
-        // Templates may not be applied at construction time; retry on each
-        // layout pass until both inner ScrollViewers are found.
         editor.LayoutUpdated += (_, _) => TryHookEditor();
-        preview.LayoutUpdated += (_, _) => TryHookPreview();
+        preview.LayoutUpdated += OnPreviewLayoutUpdated;
         TryHookEditor();
         TryHookPreview();
 
         _preview.AddHandler(InputElement.PointerPressedEvent,
-            OnPreviewPointerPressed, Avalonia.Interactivity.RoutingStrategies.Tunnel);
+            OnPreviewPointerPressed, RoutingStrategies.Tunnel);
+        _preview.AddHandler(InputElement.PointerWheelChangedEvent,
+            OnPreviewWheel, RoutingStrategies.Tunnel);
+
+        editor.TextChanged += OnEditorTextChanged;
+    }
+
+    private void OnEditorTextChanged(object? sender, EventArgs e)
+    {
+        // While Markdown.Avalonia rebuilds the preview after this edit, its
+        // ScrollChanged events are not user-initiated and must not move the
+        // editor. We also re-apply editor->preview on each subsequent
+        // layout pass for a short window so the preview ends up where the
+        // caret is rather than stuck at the top.
+        var now = DateTime.UtcNow;
+        _ignorePreviewUntil = now.AddMilliseconds(1500);
+        _resyncPreviewUntil = now.AddMilliseconds(1500);
+    }
+
+    private void OnPreviewLayoutUpdated(object? sender, EventArgs e)
+    {
+        TryHookPreview();
+        if (DateTime.UtcNow < _resyncPreviewUntil)
+            ApplyEditorRatioToPreview();
+    }
+
+    private void OnPreviewWheel(object? sender, PointerWheelEventArgs e)
+    {
+        // Whitelist preview -> editor sync for a brief window after a real
+        // user interaction. The ScrollChanged event that follows the wheel
+        // tick will then be honoured.
+        _previewUserScrollUntil = DateTime.UtcNow.AddMilliseconds(400);
     }
 
     private void TryHookEditor()
@@ -67,21 +113,15 @@ public class ScrollSyncHelper
     private void OnEditorScrollChanged(object? sender, ScrollChangedEventArgs e)
     {
         if (DateTime.UtcNow < _ignoreEditorUntil) return;
-        if (_editorScroll == null || _previewScroll == null) return;
-
-        var maxOff = _editorScroll.Extent.Height - _editorScroll.Viewport.Height;
-        if (maxOff <= 0) return;
-        var ratio = _editorScroll.Offset.Y / maxOff;
-        var previewMax = _previewScroll.Extent.Height - _previewScroll.Viewport.Height;
-        if (previewMax <= 0) return;
-
-        _ignorePreviewUntil = DateTime.UtcNow.AddMilliseconds(250);
-        _previewScroll.Offset = new Vector(_previewScroll.Offset.X, ratio * previewMax);
+        ApplyEditorRatioToPreview();
     }
 
     private void OnPreviewScrollChanged(object? sender, ScrollChangedEventArgs e)
     {
         if (DateTime.UtcNow < _ignorePreviewUntil) return;
+        // Only honour preview -> editor when the user just acted on the
+        // preview. Rebuild-driven scroll changes never reach this point.
+        if (DateTime.UtcNow >= _previewUserScrollUntil) return;
         if (_editorScroll == null || _previewScroll == null) return;
 
         var maxOff = _previewScroll.Extent.Height - _previewScroll.Viewport.Height;
@@ -92,6 +132,22 @@ public class ScrollSyncHelper
 
         _ignoreEditorUntil = DateTime.UtcNow.AddMilliseconds(250);
         _editorScroll.Offset = new Vector(_editorScroll.Offset.X, ratio * editorMax);
+    }
+
+    private void ApplyEditorRatioToPreview()
+    {
+        if (_editorScroll == null || _previewScroll == null) return;
+        var maxOff = _editorScroll.Extent.Height - _editorScroll.Viewport.Height;
+        if (maxOff <= 0) return;
+        var ratio = _editorScroll.Offset.Y / maxOff;
+        var previewMax = _previewScroll.Extent.Height - _previewScroll.Viewport.Height;
+        if (previewMax <= 0) return;
+
+        // Push the ignore window forward so any ScrollChanged the assignment
+        // below produces does not echo back to the editor.
+        var bumped = DateTime.UtcNow.AddMilliseconds(300);
+        if (bumped > _ignorePreviewUntil) _ignorePreviewUntil = bumped;
+        _previewScroll.Offset = new Vector(_previewScroll.Offset.X, ratio * previewMax);
     }
 
     private void OnPreviewPointerPressed(object? sender, PointerPressedEventArgs e)
