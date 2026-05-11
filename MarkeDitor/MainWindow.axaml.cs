@@ -667,7 +667,8 @@ public partial class MainWindow : Window
         if (string.IsNullOrEmpty(path)) return;
 
         var md = new MarkdownService();
-        var html = md.ToHtmlDocument(tab.Content ?? string.Empty, baseName);
+        var html = md.ToHtmlDocument(tab.Content ?? string.Empty, baseName,
+            _settingsService.Settings.CustomExportCss);
         try
         {
             await File.WriteAllTextAsync(path, html);

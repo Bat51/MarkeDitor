@@ -24,6 +24,10 @@ public class AppSettings
     public bool SpellCheckEnabled { get; set; } = true;
     public List<string> SpellCheckLanguages { get; set; } = new() { "fr_FR", "en_US" };
     public List<string> CustomDictionary { get; set; } = new();
+
+    // Custom CSS used by File -> Export as HTML. Empty / null means use
+    // MarkdownService.DefaultCss.
+    public string? CustomExportCss { get; set; }
 }
 
 public class SettingsService

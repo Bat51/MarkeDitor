@@ -45,13 +45,16 @@ public class MarkdownService
     }
 
     /// <summary>
-    /// Wrap the rendered HTML body in a standalone document with the default
-    /// stylesheet so users can open the exported file directly in a browser.
+    /// Wrap the rendered HTML body in a standalone document with the given
+    /// stylesheet (or <see cref="DefaultCss"/> when <paramref name="css"/>
+    /// is null/whitespace) so users can open the exported file directly in
+    /// a browser.
     /// </summary>
-    public string ToHtmlDocument(string markdown, string title)
+    public string ToHtmlDocument(string markdown, string title, string? css = null)
     {
         var body = ToHtml(markdown);
         var safeTitle = WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(title) ? "Document" : title);
+        var stylesheet = string.IsNullOrWhiteSpace(css) ? DefaultCss : css!;
         return $"""
 <!DOCTYPE html>
 <html lang="en">
@@ -60,7 +63,7 @@ public class MarkdownService
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{safeTitle}</title>
 <style>
-{DefaultCss}
+{stylesheet}
 </style>
 </head>
 <body>

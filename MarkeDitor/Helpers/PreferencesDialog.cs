@@ -75,11 +75,19 @@ public static class PreferencesDialog
         autocomplete.BindToResource(CheckBox.ForegroundProperty, "AppForegroundBrush");
         spell.BindToResource(CheckBox.ForegroundProperty, "AppForegroundBrush");
 
+        var editCss = new Button
+        {
+            Content = "Edit export CSS...",
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Margin = new Thickness(0, 8, 0, 12),
+        };
+        editCss.Click += async (_, _) => await CssEditorDialog.ShowAsync(dialog, settings);
+
         var grid = new Grid
         {
             Margin = new Thickness(20, 16, 20, 0),
             ColumnDefinitions = new ColumnDefinitions("Auto,*"),
-            RowDefinitions = new RowDefinitions("Auto,Auto,Auto,Auto,Auto,Auto,Auto"),
+            RowDefinitions = new RowDefinitions("Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"),
         };
         Add(grid, Label("Font family"), 0, 0);
         Add(grid, fontCombo, 0, 1);
@@ -92,9 +100,11 @@ public static class PreferencesDialog
         Grid.SetColumnSpan(reopen, 2);
         Grid.SetColumnSpan(autocomplete, 2);
         Grid.SetColumnSpan(spell, 2);
+        Grid.SetColumnSpan(editCss, 2);
         Add(grid, reopen, 4, 0);
         Add(grid, autocomplete, 5, 0);
         Add(grid, spell, 6, 0);
+        Add(grid, editCss, 7, 0);
 
         var ok = new Button { Content = "Save", MinWidth = 90, IsDefault = true };
         var cancel = new Button { Content = "Cancel", MinWidth = 90, IsCancel = true };
