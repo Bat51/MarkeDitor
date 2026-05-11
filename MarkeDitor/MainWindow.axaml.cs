@@ -29,6 +29,9 @@ public partial class MainWindow : Window
     private SpellCheckService? _spell;
     private SpellCheckRenderer? _spellRenderer;
     private WordCompletionProvider? _completion;
+    private PreviewLinkCommand? _previewLinkCommandField;
+    private PreviewLinkCommand _previewLinkCommand =>
+        _previewLinkCommandField ??= new PreviewLinkCommand(Preview);
     private readonly DebounceHelper _spellDebounce = new(500);
     private readonly DebounceHelper _previewDebounce;
     private readonly DebounceHelper _autoSaveDebounce;
@@ -60,6 +63,7 @@ public partial class MainWindow : Window
         _editor.ContentChanged += OnEditorContentChanged;
         _editor.CursorPositionChanged += OnCursorPositionChanged;
         _scrollSync = new ScrollSyncHelper(Editor, Preview);
+        Preview.Plugins.HyperlinkCommand = _previewLinkCommand;
 
         InitSpellCheck();
         InitAutoCompletion();
@@ -475,7 +479,9 @@ public partial class MainWindow : Window
 
     private void UpdatePreview(string markdownContent)
     {
-        Preview.Markdown = markdownContent ?? string.Empty;
+        var processed = MarkdownPreprocessor.Process(markdownContent);
+        _previewLinkCommand.AnchorTargets = processed.AnchorTargets;
+        Preview.Markdown = processed.Markdown;
     }
 
     // Tell Markdown.Avalonia where to resolve relative asset paths (images,

@@ -5,6 +5,7 @@
         xmlns:ae="https://github.com/avaloniaui/avaloniaedit"
         xmlns:md="https://github.com/whistyun/Markdown.Avalonia"
         xmlns:ctxt="clr-namespace:ColorTextBlock.Avalonia;assembly=ColorTextBlock.Avalonia"
+        xmlns:mdc="clr-namespace:Markdown.Avalonia.Controls;assembly=Markdown.Avalonia"
         xmlns:helpers="clr-namespace:MarkeDitor.Helpers"
         xmlns:views="using:MarkeDitor.Views"
         mc:Ignorable="d"
@@ -102,6 +103,10 @@
                                 <md:MdAvPlugins>
                                     <md:MdAvPlugins.Plugins>
                                         <helpers:TextMateCodeBlockPlugin/>
+                                        <helpers:HighlightPlugin/>
+                                        <helpers:TaskListPlugin/>
+                                        <helpers:SubscriptPlugin/>
+                                        <helpers:SuperscriptPlugin/>
                                     </md:MdAvPlugins.Plugins>
                                 </md:MdAvPlugins>
                             </md:MarkdownScrollViewer.Plugins>
@@ -118,6 +123,18 @@
                                     <Setter Property="BorderThickness" Value="1"/>
                                     <Setter Property="CornerRadius" Value="3"/>
                                     <Setter Property="Padding" Value="4,1"/>
+                                </Style>
+                                <!-- Breathing room above H2 sections (also gives the
+                                     generated Footnotes section its top padding). -->
+                                <Style Selector="ctxt|CTextBlock.Heading2">
+                                    <Setter Property="Margin" Value="0,16,0,8"/>
+                                </Style>
+                                <!-- Extra space above horizontal rules but
+                                     keep them close to the following H2,
+                                     otherwise the Footnotes heading drifts
+                                     too far below the rule. -->
+                                <Style Selector="mdc|Rule">
+                                    <Setter Property="Margin" Value="0,16,0,4"/>
                                 </Style>
                             </md:MarkdownScrollViewer.Styles>
                         </md:MarkdownScrollViewer>
