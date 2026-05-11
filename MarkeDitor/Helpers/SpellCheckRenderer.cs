@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using AvaloniaEdit;
 using AvaloniaEdit.Document;
 using AvaloniaEdit.Rendering;
@@ -18,9 +19,13 @@ public record MisspelledWord(int Offset, int Length, string Text);
 /// </summary>
 public class SpellCheckRenderer : IBackgroundRenderer
 {
+    private static readonly IPen WavyPen =
+        new ImmutablePen(new ImmutableSolidColorBrush(Color.FromRgb(0xff, 0x55, 0x55)), 1);
+
     private readonly TextEditor _editor;
     private readonly SpellCheckService _spell;
     private List<MisspelledWord> _misspelled = new();
+    private int _scanLength = -1; // document length captured at last Rescan
 
     public SpellCheckRenderer(TextEditor editor, SpellCheckService spell)
     {
@@ -28,13 +33,17 @@ public class SpellCheckRenderer : IBackgroundRenderer
         _spell = spell;
     }
 
-    public KnownLayer Layer => KnownLayer.Selection;
+    // Background instead of Selection: different invalidation cycle, and the
+    // Selection layer interacts with caret rendering which has triggered
+    // re-entrant text-bounds loops in Avalonia 11.0.x.
+    public KnownLayer Layer => KnownLayer.Background;
 
     public IReadOnlyList<MisspelledWord> Misspelled => _misspelled;
 
     public void Clear()
     {
         _misspelled = new List<MisspelledWord>();
+        _scanLength = -1;
         _editor.TextArea?.TextView?.InvalidateLayer(Layer);
     }
 
@@ -51,6 +60,7 @@ public class SpellCheckRenderer : IBackgroundRenderer
                     found.Add(m);
             }
         }
+        _scanLength = text.Length;
         _misspelled = found;
         _editor.TextArea?.TextView?.InvalidateLayer(Layer);
     }
@@ -68,24 +78,62 @@ public class SpellCheckRenderer : IBackgroundRenderer
     {
         if (!textView.VisualLinesValid || _misspelled.Count == 0) return;
 
-        var pen = new Pen(new SolidColorBrush(Color.FromRgb(0xff, 0x55, 0x55)), 1);
-        var visualStart = textView.VisualLines[0].FirstDocumentLine.Offset;
-        var visualEnd = textView.VisualLines[textView.VisualLines.Count - 1].LastDocumentLine.EndOffset;
+        var doc = _editor.Document;
+        if (doc == null) return;
+        var docLength = doc.TextLength;
+        if (docLength == 0) return;
 
-        foreach (var word in _misspelled)
+        // Only draw when the misspelled-words list matches the current
+        // document. Between keystrokes the offsets in _misspelled refer to a
+        // *snapshot* of the text taken at the last rescan; feeding stale
+        // offsets to AvaloniaEdit's BackgroundGeometryBuilder can send
+        // TextLineImpl.GetTextBoundsLeftToRight into an infinite loop on
+        // 11.0.x. Wavy lines flicker briefly during typing — acceptable.
+        if (_scanLength != docLength) return;
+
+        // Iterate visible lines ourselves and intersect each misspelled word
+        // with each line. This bounds the segments we hand to
+        // BackgroundGeometryBuilder to a single visual line, and lets us cap
+        // total work as a defence against pathological inputs.
+        const int maxDraws = 200;
+        int drawn = 0;
+
+        foreach (var visualLine in textView.VisualLines)
         {
-            if (word.Offset > visualEnd) break;
-            if (word.Offset + word.Length < visualStart) continue;
+            var lineStart = visualLine.FirstDocumentLine.Offset;
+            var lineEnd = visualLine.LastDocumentLine.EndOffset;
 
-            var segment = new TextSegment { StartOffset = word.Offset, Length = word.Length };
-            foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment))
+            foreach (var word in _misspelled)
             {
-                DrawWavy(drawingContext, pen, rect.Left, rect.Bottom - 1, rect.Right);
+                if (drawn >= maxDraws) return;
+                if (word.Offset > lineEnd) break; // sorted by Offset
+
+                var wEnd = word.Offset + word.Length;
+                if (wEnd <= lineStart) continue;
+
+                var segStart = Math.Max(word.Offset, lineStart);
+                var segEnd = Math.Min(wEnd, lineEnd);
+                if (segEnd <= segStart) continue;
+
+                var segment = new TextSegment { StartOffset = segStart, Length = segEnd - segStart };
+                try
+                {
+                    foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment))
+                    {
+                        DrawWavy(drawingContext, WavyPen, rect.Left, rect.Bottom - 1, rect.Right);
+                    }
+                    drawn++;
+                }
+                catch
+                {
+                    // Skip a single pathological segment rather than tearing
+                    // the whole render loop down.
+                }
             }
         }
     }
 
-    private static void DrawWavy(DrawingContext ctx, Pen pen, double x0, double y, double x1)
+    private static void DrawWavy(DrawingContext ctx, IPen pen, double x0, double y, double x1)
     {
         // Tiny zig-zag: 2px tall, 4px period.
         const double period = 4;
