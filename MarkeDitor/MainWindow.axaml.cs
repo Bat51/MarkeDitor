@@ -486,6 +486,59 @@ public partial class MainWindow : Window
     private async void OnAbout(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
         => await AboutDialog.ShowAsync(this);
 
+    private async void OnExportHtml(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        var tab = _viewModel.ActiveTab;
+        if (tab == null) return;
+
+        var baseName = Path.GetFileNameWithoutExtension(tab.FileName);
+        if (string.IsNullOrWhiteSpace(baseName)) baseName = "document";
+        var path = await _dialogService.ShowSaveHtmlDialogAsync(baseName + ".html");
+        if (string.IsNullOrEmpty(path)) return;
+
+        var md = new MarkdownService();
+        var html = md.ToHtmlDocument(tab.Content ?? string.Empty, baseName);
+        try
+        {
+            await File.WriteAllTextAsync(path, html);
+        }
+        catch (Exception ex)
+        {
+            await DialogHelper.ShowYesNoAsync(this, "Export failed",
+                "Could not write " + path + ":\n" + ex.Message, "OK", null!);
+        }
+    }
+
+    private async void OnCopyAsHtml(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        var tab = _viewModel.ActiveTab;
+        if (tab == null) return;
+        var md = new MarkdownService();
+        await PutHtmlOnClipboardAsync(md.ToHtml(tab.Content ?? string.Empty));
+    }
+
+    private async void OnCopySelectionAsHtml(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        var selected = Editor.SelectedText;
+        if (string.IsNullOrEmpty(selected)) return;
+        var md = new MarkdownService();
+        await PutHtmlOnClipboardAsync(md.ToHtml(selected));
+    }
+
+    private async Task PutHtmlOnClipboardAsync(string html)
+    {
+        var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+        if (clipboard == null) return;
+
+        var data = new Avalonia.Input.DataObject();
+        // text/html for rich-paste targets (LibreOffice, Gmail, Slack...).
+        data.Set("text/html", html);
+        // Plain-text fallback so paste into a code editor gets the HTML
+        // source rather than nothing.
+        data.Set(Avalonia.Input.DataFormats.Text, html);
+        await clipboard.SetDataObjectAsync(data);
+    }
+
     #region Settings, Recent files, Zoom
 
     private void ApplySettings()

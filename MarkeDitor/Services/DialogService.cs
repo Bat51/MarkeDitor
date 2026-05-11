@@ -66,4 +66,22 @@ public class DialogService
 
         return result?.TryGetLocalPath();
     }
+
+    public async Task<string?> ShowSaveHtmlDialogAsync(string suggestedFileName)
+    {
+        var storage = TopLevel.GetTopLevel(_window)?.StorageProvider;
+        if (storage == null) return null;
+
+        var result = await storage.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            SuggestedFileName = suggestedFileName,
+            DefaultExtension = "html",
+            FileTypeChoices = new List<FilePickerFileType>
+            {
+                new("HTML") { Patterns = new[] { "*.html", "*.htm" } },
+            }
+        });
+
+        return result?.TryGetLocalPath();
+    }
 }

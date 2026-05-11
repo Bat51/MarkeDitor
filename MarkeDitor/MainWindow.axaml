@@ -26,6 +26,8 @@
                 <MenuItem Header="_Save" InputGesture="Ctrl+S" Click="OnSave"/>
                 <MenuItem Header="Save _As..." InputGesture="Ctrl+Shift+S" Click="OnSaveAs"/>
                 <Separator/>
+                <MenuItem Header="Export as _HTML..." Click="OnExportHtml"/>
+                <Separator/>
                 <MenuItem Header="_Preferences..." Click="OnPreferences"/>
                 <Separator/>
                 <MenuItem Header="E_xit" Click="OnExit"/>
@@ -35,6 +37,9 @@
                 <MenuItem Header="_Redo" InputGesture="Ctrl+Y" Click="OnRedo"/>
                 <Separator/>
                 <MenuItem Header="_Find" InputGesture="Ctrl+F" Click="OnFind"/>
+                <Separator/>
+                <MenuItem Header="Copy as HTM_L" Click="OnCopyAsHtml"/>
+                <MenuItem Header="Copy _Selection as HTML" Click="OnCopySelectionAsHtml"/>
             </MenuItem>
             <MenuItem Header="_View">
                 <MenuItem Header="File Explorer" Click="OnToggleFileExplorer"/>
