@@ -2,7 +2,7 @@
 ; Requires Inno Setup 6+ (https://jrsoftware.org/isinfo.php)
 
 #define MyAppName "MarkeDitor"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.1.0"
 #define MyAppPublisher "MarkeDitor"
 #define MyAppExeName "MarkeDitor.exe"
 #define MyAppURL "https://github.com/markeditor"
