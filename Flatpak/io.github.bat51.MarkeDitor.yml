@@ -1,0 +1,58 @@
+# Flatpak manifest for MarkeDitor.
+#
+# This manifest installs the pre-built, self-contained Linux x64 binary
+# from the GitHub release tarball. It is fine for local builds and
+# personal sideloading; for an official Flathub submission the convention
+# is to build from source using the dotnet8 SDK extension instead.
+#
+# Build:  flatpak-builder --user --install --force-clean build-dir io.github.bat51.MarkeDitor.yml
+# Run:    flatpak run io.github.bat51.MarkeDitor
+
+app-id: io.github.bat51.MarkeDitor
+runtime: org.freedesktop.Platform
+# 23.08 is end-of-life upstream but is what we have installed for the
+# local test build. Bump to 24.08 (and reinstall the matching runtime/
+# sdk) before submitting to Flathub.
+runtime-version: '23.08'
+sdk: org.freedesktop.Sdk
+command: markeditor
+
+finish-args:
+  - --share=ipc
+  - --share=network            # update check against github.com
+  - --socket=x11               # Avalonia 11.0 only has an X11 backend (XWayland is fine)
+  - --socket=wayland
+  - --device=dri
+  - --filesystem=home          # users routinely keep notes anywhere under $HOME
+  - --filesystem=xdg-documents
+  - --filesystem=xdg-pictures
+
+modules:
+  - name: markeditor
+    buildsystem: simple
+    build-commands:
+      # Drop the self-contained .NET payload into /app/share/markeditor.
+      - mkdir -p /app/share/markeditor
+      - cp -a MarkeDitor-linux-x64/bin/. /app/share/markeditor/
+      - chmod +x /app/share/markeditor/MarkeDitor
+      # Launcher in /app/bin so the Flatpak `command:` field can resolve it.
+      - install -Dm755 markeditor.sh /app/bin/markeditor
+      # Icon
+      - install -Dm644 MarkeDitor-linux-x64/bin/Assets/app.png
+          /app/share/icons/hicolor/256x256/apps/io.github.bat51.MarkeDitor.png
+      # Desktop entry + AppStream metadata
+      - install -Dm644 io.github.bat51.MarkeDitor.desktop
+          /app/share/applications/io.github.bat51.MarkeDitor.desktop
+      - install -Dm644 io.github.bat51.MarkeDitor.metainfo.xml
+          /app/share/metainfo/io.github.bat51.MarkeDitor.metainfo.xml
+    sources:
+      - type: archive
+        url: https://github.com/Bat51/MarkeDitor/releases/download/v1.1.0/MarkeDitor-1.1.0-linux-x64.tar.gz
+        sha256: ff64faf134cc73837fa7a6f6b46d988fd3b63168b485d5daa33ff9cc50f1c111
+        strip-components: 0
+      - type: file
+        path: markeditor.sh
+      - type: file
+        path: io.github.bat51.MarkeDitor.desktop
+      - type: file
+        path: io.github.bat51.MarkeDitor.metainfo.xml
